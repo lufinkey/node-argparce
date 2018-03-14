@@ -48,7 +48,9 @@ const ArgParser = require('argparce');
 	- `strays` [\<Array>] An array of stray arguments. Stray arguments are command line parameters that didn't match any arguments defined in `options.args`. Array is empty by default unless `options` has some non-default values.
 	- `stopped` [\<boolean>] Indicates if parsing was stopped before finishing
 
-- Example:
+Parses the command line arguments with the given options 
+
+- **Example:**
 
 	**Javascript Code:**
 
