@@ -603,7 +603,7 @@ function parseArgs(args, options)
 		result.endIndex = args.length - 1;
 	}
 
-	if(options.errorExitCode > 0)
+	if(options.errorExitCode != null)
 	{
 		if(result.errors.length > 0)
 		{
