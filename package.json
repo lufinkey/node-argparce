@@ -1,0 +1,17 @@
+{
+  "name": "argparce",
+  "version": "1.0.0",
+  "description": "Parse command line arguments in nodejs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "args",
+    "params",
+    "parse",
+    "cli"
+  ],
+  "author": "",
+  "license": "ISC"
+}
