@@ -130,7 +130,7 @@ function validateValue(type, value)
 	switch(type)
 	{
 		case 'string':
-			return value;
+			return ''+value;
 
 		case 'boolean':
 			if(value=='true' || value=='1')
