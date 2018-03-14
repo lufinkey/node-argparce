@@ -1,6 +1,5 @@
 
 const { URL } = require('url');
-const Introspect = require('./Introspect');
 
 /*
 
@@ -45,6 +44,75 @@ Result
 	endIndex: -1
 }
 */
+
+function createDefaultEntry(pathKey)
+{
+	if(typeof pathKey == 'number' && Number.isInteger(pathKey))
+	{
+		return [];
+	}
+	else if(typeof pathKey == 'string')
+	{
+		return {};
+	}
+	throw new Error("invalid path key "+pathKey+": key must be an integer or a string");
+}
+
+function getValidObjectForPath(receiver, path)
+{
+	var currentObj = receiver;
+	for(const pathKey of path)
+	{
+		if(currentObj[pathKey] == undefined)
+		{
+			currentObj[pathKey] = createDefaultEntry(pathKey);
+		}
+		currentObj = currentObj[pathKey];
+	}
+	return currentObj;
+}
+
+function putEntry(receiver, path, value)
+{
+	if(path.length == 0)
+	{
+		throw new Error("cannot put value in object without a path");
+	}
+	var leadingPath = path.slice(0, path.length-1);
+	var lastKey = path[path.length-1];
+	var obj = getValidObjectForPath(receiver, leadingPath);
+	obj[lastKey] = value;
+}
+
+function pushEntry(receiver, path, value)
+{
+	if(path.length == 0)
+	{
+		throw new Error("cannot push value onto object without a path");
+	}
+	var leadingPath = path.slice(0, path.length-1);
+	var lastKey = path[path.length-1];
+	var obj = getValidObjectForPath(receiver, leadingPath);
+	if(!(obj[lastKey] instanceof Array))
+	{
+		obj[lastKey] = [];
+	}
+	obj[lastKey].push(value);
+}
+
+function queryEntry(receiver, path)
+{
+	var currentObj = receiver;
+	for(const entry of path)
+	{
+		if(currentObj === null || currentObj === undefined)
+		{
+			return currentObj;
+		}
+		currentObj = currentObj[entry];
+	}
+	return currentObj;
+}
 
 
 
@@ -157,11 +225,11 @@ function createEntry(receiver, path, value, is_array=false)
 {
 	if(is_array)
 	{
-		Introspect.push(receiver, path, value);
+		pushEntry(receiver, path, value);
 	}
 	else
 	{
-		Introspect.put(receiver, path, value);
+		putEntry(receiver, path, value);
 	}
 }
 
@@ -274,10 +342,6 @@ function addArgIfPossible(result, options, fullArg, argName, argValue)
 		}
 
 		var valType = arg.type;
-		if(arg.type == 'object')
-		{
-			valType = 'json';
-		}
 		if(arg.type == 'boolean' && (argValue === null || argValue === undefined))
 		{
 			argValue = 'true';
@@ -393,11 +457,11 @@ function addStrayIfPossible(result, options, stray)
 							// add stray
 							if(options.singleStray)
 							{
-								Introspect.put(result, strayPath, value);
+								putEntry(result, strayPath, value);
 							}
 							else
 							{
-								Introspect.push(result, strayPath, value);
+								pushEntry(result, strayPath, value);
 							}
 							return { added: true, stopped: false };
 						}
@@ -417,11 +481,11 @@ function addStrayIfPossible(result, options, stray)
 					// add stray
 					if(options.singleStray)
 					{
-						Introspect.put(result, strayPath, value);
+						putEntry(result, strayPath, value);
 					}
 					else
 					{
-						Introspect.push(result, strayPath, value);
+						pushEntry(result, strayPath, value);
 					}
 					return { added: true, stopped: false };
 				}
@@ -433,11 +497,11 @@ function addStrayIfPossible(result, options, stray)
 	// add stray
 	if(options.singleStray)
 	{
-		Introspect.put(result, strayPath, stray);
+		putEntry(result, strayPath, stray);
 	}
 	else
 	{
-		Introspect.push(result, strayPath, stray);
+		pushEntry(result, strayPath, stray);
 	}
 	return { added: true, stopped: false };
 }
@@ -448,6 +512,7 @@ function parseArgs(args, options)
 		args: {},
 		strays: [],
 		errors: [],
+		stopped: false,
 		endIndex: -1
 	}
 
@@ -571,7 +636,7 @@ function parseArgs(args, options)
 			var hasEntry = false;
 			if(arg.path)
 			{
-				if(Introspect.query(result.args, arg.path) !== undefined)
+				if(queryEntry(result.args, arg.path) !== undefined)
 				{
 					hasEntry = true;
 				}
@@ -601,6 +666,10 @@ function parseArgs(args, options)
 	if(!stopped)
 	{
 		result.endIndex = args.length - 1;
+	}
+	else
+	{
+		result.stopped = true;
 	}
 
 	if(options.errorExitCode != null)
