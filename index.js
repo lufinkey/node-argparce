@@ -235,23 +235,26 @@ function createEntry(receiver, path, value, is_array=false)
 
 function getOptionsArg(options, argName)
 {
-	for(var i=0; i<options.args.length; i++)
+	if(options.args)
 	{
-		var arg = options.args[i];
-		if(arg.type == 'object')
+		for(var i=0; i<options.args.length; i++)
 		{
-			if(argName.startsWith(arg.name+'.'))
+			var arg = options.args[i];
+			if(arg.type == 'object')
+			{
+				if(argName.startsWith(arg.name+'.'))
+				{
+					return arg;
+				}
+				else if(argName == arg.name)
+				{
+					return arg;
+				}
+			}
+			else if(argName == arg.name || argName == arg.short)
 			{
 				return arg;
 			}
-			else if(argName == arg.name)
-			{
-				return arg;
-			}
-		}
-		else if(argName == arg.name || argName == arg.short)
-		{
-			return arg;
 		}
 	}
 	return null;
@@ -626,38 +629,41 @@ function parseArgs(args, options)
 		}
 	}
 
-	for(var i=0; i<options.args.length; i++)
+	if(options.args)
 	{
-		var arg = options.args[i];
-
-		if(arg.default !== undefined)
+		for(var i=0; i<options.args.length; i++)
 		{
-			// check if a value exists for the argument
-			var hasEntry = false;
-			if(arg.path)
+			var arg = options.args[i];
+
+			if(arg.default !== undefined)
 			{
-				if(queryEntry(result.args, arg.path) !== undefined)
-				{
-					hasEntry = true;
-				}
-			}
-			else
-			{
-				if(result.args[arg.name] !== undefined)
-				{
-					hasEntry = true;
-				}
-			}
-			// store default value for argument if there was no entry
-			if(!hasEntry)
-			{
+				// check if a value exists for the argument
+				var hasEntry = false;
 				if(arg.path)
 				{
-					createEntry(result.args, arg.path, arg.default);
+					if(queryEntry(result.args, arg.path) !== undefined)
+					{
+						hasEntry = true;
+					}
 				}
 				else
 				{
-					result.args[arg.name] = arg.default;
+					if(result.args[arg.name] !== undefined)
+					{
+						hasEntry = true;
+					}
+				}
+				// store default value for argument if there was no entry
+				if(!hasEntry)
+				{
+					if(arg.path)
+					{
+						createEntry(result.args, arg.path, arg.default);
+					}
+					else
+					{
+						result.args[arg.name] = arg.default;
+					}
 				}
 			}
 		}
